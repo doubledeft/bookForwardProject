@@ -152,11 +152,11 @@ def register():
     """
     username = request.form['username']
     password = request.form['password']
-    age=request.form['age']
-    data = {"userid": username, "password": password,'age':age}
-    response = requests.post(backSite+"/user/user/register", data=data).json();
+    age = request.form['age']
+    data = {"userid": username, "password": password, 'age': age}
+    response = requests.post(backSite + "/user/user/register", data=data).json();
     logger.info(response)
-    if response['code'] ==0:
+    if response['code'] == 0:
         logger.info("成功")
         return render_template('Login.html')
     else:
@@ -172,9 +172,9 @@ def is_valid(username, password):
     :return: True/False
     """
     data = {"userid": username, "password": password}
-    response = requests.post(backSite+"/user/user/login", data=data).json();
+    response = requests.post(backSite + "/user/user/login", data=data).json();
     logger.info(response)
-    if response['code'] ==0:
+    if response['code'] == 0:
         logger.info("成功")
         return True
     else:
@@ -237,15 +237,16 @@ def update_recommend_book(UserID, BookID):
     #     logger.info("update_recommend_book, sql:{}".format(sql))
     #     mysql.exe(sql)
 
-    data = {"user_id":UserID,"book_id":BookID}
-    response = requests.post(backSite+"/book/book/update-recommend-book", data=data).json()
+    data = {"user_id": UserID, "book_id": BookID}
+    response = requests.post(backSite + "/book/book/update-recommend-book", data=data).json()
     logger.info(response)
-    if response['code'] ==0:
+    if response['code'] == 0:
         logger.info("成功")
         return True
     else:
         logger.exception("推荐出现错误")
         return False
+
 
 @app.route("/bookinfo", methods=['POST', 'GET'])
 def bookinfo():
@@ -272,11 +273,11 @@ def bookinfo():
             # book_info = mysql.fetchall_db(sql)
             # book_info = [v for k, v in book_info[0].items()]
 
-            data = {"book_id":bookid}
-            response = requests.post(backSite+"/book/book/get-book-info", data=data).json()
+            data = {"book_id": bookid}
+            response = requests.post(backSite + "/book/book/get-book-info", data=data).json()
             logger.info(response)
-            if response['code'] ==0:
-                book_info=response['data']['info']
+            if response['code'] == 0:
+                book_info = response['data']['info']
             else:
                 logger.exception("推荐出现错误")
 
@@ -289,11 +290,11 @@ def bookinfo():
             #     score = int(score['Rating'])
             #     score = math.ceil(score / 2)
             #     if score > 10: score = 10
-            data = {"user_id":userid,"book_id":bookid}
-            response = requests.post(backSite+"/book/book/get-user-book-rating", data=data).json()
+            data = {"user_id": userid, "book_id": bookid}
+            response = requests.post(backSite + "/book/book/get-user-book-rating", data=data).json()
             logger.info(response)
-            if response['code'] ==0:
-                score=response['data']['score']
+            if response['code'] == 0:
+                score = response['data']['score']
                 score = math.ceil(score / 2)
                 if score > 10: score = 10
             else:
@@ -326,11 +327,12 @@ def user():
     #     userinfo = [v for k, v in userinfo.items()]
     # except Exception as e:
     #     logger.exception("select UserInfo error: {}".format(e))
-    data = {"user_id":userid}
-    response = requests.post(backSite+"/user/user/get-user-info", data=data).json()
+    data = {"userid": userid}
+    response = requests.post(backSite + "/user/user/get-user-info", data=data).json()
     logger.info(response)
-    userinfo=response['data']
-    if response['code'] ==0:
+    if response['code'] == 0:
+        userinfo = response['data']
+        # print(userinfo['username']);
         return render_template("UserInfo.html",
                                login=login,
                                useid=userid,
@@ -338,8 +340,6 @@ def user():
     else:
         logger.exception("获取用户信息失败")
         return False
-
-
 
 
 @app.route("/search", methods=['POST', 'GET'])
@@ -352,21 +352,31 @@ def search():
     if 'userid' in session:
         login, userid = True, session['userid']
     keyword, search_books = "", []
-    try:
-        if request.method == 'GET':
-            keyword = request.values.get('keyword')
-            keyword = keyword.strip()
-            sql = "SELECT BookTitle, BookAuthor ,BookID, ImageM from Books where BookTitle like '%{}%' limit 20".format(
-                keyword)
-            search_books = mysql.fetchall_db(sql)
-            search_books = [[v for k, v in row.items()] for row in search_books]
-    except Exception as e:
-        logger.exception("select search books error: {}".format(e))
-    return render_template("Search.html",
-                           key=keyword,
-                           books=search_books,
-                           login=login,
-                           useid=userid)
+    # try:
+    #     if request.method == 'GET':
+    #         keyword = request.values.get('keyword')
+    #         keyword = keyword.strip()
+    #         sql = "SELECT BookTitle, BookAuthor ,BookID, ImageM from Books where BookTitle like '%{}%' limit 20".format(
+    #             keyword)
+    #         search_books = mysql.fetchall_db(sql)
+    #         search_books = [[v for k, v in row.items()] for row in search_books]
+    # except Exception as e:
+    #     logger.exception("select search books error: {}".format(e))
+
+    keyword = request.values.get('keyword')
+    keyword = keyword.strip()
+    data = {"keyword": keyword}
+    response = requests.post(backSite + "/book/book/search-books", data=data).json()
+    logger.info(response)
+    if response['code'] == 0:
+        search_books = response['data']['info']
+        return render_template("Search.html",
+                               key=keyword,
+                               books=search_books,
+                               login=login,
+                               useid=userid)
+    else:
+        logger.exception("获取用户信息失败")
 
 
 @app.route("/rating", methods=['POST', 'GET'])
