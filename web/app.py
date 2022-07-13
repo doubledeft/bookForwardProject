@@ -156,7 +156,7 @@ def register():
     data = {"userid": username, "password": password,'age':age}
     response = requests.post(backSite+"/user/user/register", data=data).json();
     logger.info(response)
-    if response['code'] != 300100:
+    if response['code'] ==0:
         logger.info("成功")
         return render_template('Login.html')
     else:
@@ -171,19 +171,14 @@ def is_valid(username, password):
     :param password: 密码
     :return: True/False
     """
-    try:
-        sql = "SELECT UserID, Location as Username FROM User where UserID='{}' and Location ='{}'".format(username,
-                                                                                                          password)
-        result = mysql.fetchone_db(sql)
-
-        if result:
-            logger.info('username:{},password:{}: has login success'.format(username, password))
-            return True
-        else:
-            logger.info('username:{},password:{}: has login filed'.format(username, password))
-            return False
-    except Exception as e:
-        logger.exception('username:{},password:{}: has login error'.format(username, password))
+    data = {"userid": username, "password": password}
+    response = requests.post(backSite+"/user/user/login", data=data).json();
+    logger.info(response)
+    if response['code'] ==0:
+        logger.info("成功")
+        return True
+    else:
+        logger.exception("注册出错")
         return False
 
 
