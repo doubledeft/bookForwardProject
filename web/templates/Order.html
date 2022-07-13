@@ -130,13 +130,13 @@
 
     <div class="list-group">
             {% for book in books %}
-            <div class="col-sm-12  list-group-item" onclick="myClick('{{book[0]}}')">
-                <div class="col-sm-3 line-center" >{{book[0]}}</div>
-                <div class="col-sm-2 line-center"><p>{{book[1]}}</p></div>
-                <div class="col-sm-2 line-center"><p>{{book[2]}}</p></div>
-                <div class="col-sm-2 line-center">{{book[3]}}</div>
+            <div class="col-sm-12  list-group-item" onclick="myClick('{{book["id"]}}')">
+                <div class="col-sm-3 line-center" >{{book["id"]}}</div>
+                <div class="col-sm-2 line-center"><p>{{book["bookInfo"]["name"]}}</p></div>
+                <div class="col-sm-2 line-center"><p>{{book["bookInfo"]["author"]}}</p></div>
+                <div class="col-sm-2 line-center">{{book["bookInfo"]["price"]}}</div>
                 <div class="col-sm-3 line-center">
-                <a href="/delete?bookid={{book[0]}}" bookid="{{ book[0] }}"><button class="btn btn-danger">删除订单</button></a>
+                <a href="/delete?bookid={{book["id"]}}" bookid="{{ book["id"] }}"><button class="btn btn-danger">删除订单</button></a>
                 </div>
             </div>
             {% endfor %}

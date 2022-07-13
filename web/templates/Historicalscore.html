@@ -104,11 +104,11 @@
         </div>
         <div class="list-group">
             {% for book in books %}
-            <div class="col-sm-12  list-group-item" onclick="myClick('{{book[3]}}')">
-                <div class="col-sm-3 line-center" >{{book[3]}}</div>
-                <div class="col-sm-2 line-center"><p>{{book[0]}}</p></div>
-                <div class="col-sm-2 line-center"><p>{{book[1]}}</p></div>
-                <div class="col-sm-2 line-center">{{book[4]}}</div>
+            <div class="col-sm-12  list-group-item" onclick="myClick('{{book["id"]}}')">
+                <div class="col-sm-3 line-center" >{{book["id"]}}</div>
+                <div class="col-sm-2 line-center"><p>{{book["bookInfo"]["name"]}}</p></div>
+                <div class="col-sm-2 line-center"><p>{{book["bookInfo"]["author"]}}</p></div>
+                <div class="col-sm-2 line-center">{{book["score"]}}</div>
                 <div class="col-sm-3 line-center">
                 <button class="btn btn-success">查看详情</button>
                 </div>

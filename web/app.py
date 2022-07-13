@@ -237,7 +237,7 @@ def update_recommend_book(UserID, BookID):
     #     logger.info("update_recommend_book, sql:{}".format(sql))
     #     mysql.exe(sql)
 
-    data = {"user_id": UserID, "book_id": BookID}
+    data = {"user_name": UserID, "book_id": BookID}
     response = requests.post(backSite + "/book/book/update-recommend-book", data=data).json()
     logger.info(response)
     if response['code'] == 0:
@@ -272,7 +272,7 @@ def bookinfo():
             #                 ImageM from Books where BookID="{}" """.format(bookid)
             # book_info = mysql.fetchall_db(sql)
             # book_info = [v for k, v in book_info[0].items()]
-
+            print(bookid)
             data = {"book_id": bookid}
             response = requests.post(backSite + "/book/book/get-book-info", data=data).json()
             logger.info(response)
@@ -290,7 +290,7 @@ def bookinfo():
             #     score = int(score['Rating'])
             #     score = math.ceil(score / 2)
             #     if score > 10: score = 10
-            data = {"user_id": userid, "book_id": bookid}
+            data = {"user_name": userid, "book_id": bookid}
             response = requests.post(backSite + "/book/book/get-user-book-rating", data=data).json()
             logger.info(response)
             if response['code'] == 0:
@@ -299,14 +299,14 @@ def bookinfo():
                 if score > 10: score = 10
             else:
                 logger.exception("没有此用户对这本书的评分")
+        return render_template('BookInfo.html',
+                               book_info=book_info,
+                               login=login,
+                               useid=userid,
+                               score=score)
 
     except Exception as e:
         logger.exception("select book info error: {}".format(e))
-    return render_template('BookInfo.html',
-                           book_info=book_info,
-                           login=login,
-                           useid=userid,
-                           score=score)
 
 
 @app.route("/user", methods=['POST', 'GET'])
@@ -386,25 +386,32 @@ def rating():
     :return: update
     """
     userid = session['userid']
-    try:
-        if request.method == 'POST':
-            rank = request.values.get('rank')
-            bookid = request.values.get('book_id')
-            sql = '''SELECT COUNT(1) as count FROM Bookrating WHERE UserID="{0}" and BookID="{1}" '''.format(userid,
-                                                                                                             bookid)
-            count = mysql.fetchone_db(sql)
-            if count['count']:
-                sql = '''UPDATE Bookrating SET Rating='{2}' WHERE UserID="{0}" and BookID="{1}"  '''.format(userid,
-                                                                                                            bookid,
-                                                                                                            int(rank) * 2)
-            else:
-                sql = '''INSERT INTO Bookrating (UserID,BookID,Rating) values ('{0}','{1}','{2}') '''.format(userid,
-                                                                                                             bookid,
-                                                                                                             int(rank) * 2)
-            mysql.exe(sql)
-            logger.info("update book rating success,sql:{}".format(sql))
-    except Exception as e:
-        logger.exception("rating books error: {}".format(e))
+    # try:
+    #     if request.method == 'POST':
+    #         rank = request.values.get('rank')
+    #         bookid = request.values.get('book_id')
+    #         sql = '''SELECT COUNT(1) as count FROM Bookrating WHERE UserID="{0}" and BookID="{1}" '''.format(userid,
+    #                                                                                                          bookid)
+    #         count = mysql.fetchone_db(sql)
+    #         if count['count']:
+    #             sql = '''UPDATE Bookrating SET Rating='{2}' WHERE UserID="{0}" and BookID="{1}"  '''.format(userid,
+    #                                                                                                         bookid,
+    #                                                                                                         int(rank) * 2)
+    #         else:
+    #             sql = '''INSERT INTO Bookrating (UserID,BookID,Rating) values ('{0}','{1}','{2}') '''.format(userid,
+    #                                                                                                          bookid,
+    #                                                                                                          int(rank) * 2)
+    #         mysql.exe(sql)
+    #         logger.info("update book rating success,sql:{}".format(sql))
+    # except Exception as e:
+    #     logger.exception("rating books error: {}".format(e))
+
+    rank = request.values.get('rank')
+    bookid = request.values.get('book_id')
+    data = {"user_id": userid, "book_id": bookid, "rank": rank}
+    response = requests.post(backSite + "/book/book/set-book-rating", data=data).json()
+    logger.info(response)
+
     return redirect(url_for('root'))
 
 
@@ -420,25 +427,29 @@ def historical():
     else:
         login, userid = True, session['userid']
     historicals = []
-    try:
-        sql = '''SELECT 
-                        BookTitle,
-                        BookAuthor,
-                        PubilcationYear,
-                        a.BookID,
-                        Rating,
-                        ImageM 
-                        FROM (SELECT * from Bookrating ) a  
-                        LEFT  JOIN  Books as b on a.BookID = b.BookID where a.UserID = '{}'
-                        '''.format(userid)
-        historicals = mysql.fetchall_db(sql)
-        historicals = [[v for k, v in row.items()] for row in historicals]
-    except Exception as e:
-        logger.exception("historical rating books error: {}".format(e))
-    return render_template("Historicalscore.html",
-                           books=historicals,
-                           login=login,
-                           useid=userid)
+    # try:
+    #     sql = '''SELECT
+    #                     BookTitle,
+    #                     BookAuthor,
+    #                     PubilcationYear,
+    #                     a.BookID,
+    #                     Rating,
+    #                     ImageM
+    #                     FROM (SELECT * from Bookrating ) a
+    #                     LEFT  JOIN  Books as b on a.BookID = b.BookID where a.UserID = '{}'
+    #                     '''.format(userid)
+    #     historicals = mysql.fetchall_db(sql)
+    #     historicals = [[v for k, v in row.items()] for row in historicals]
+    # except Exception as e:
+    #     logger.exception("historical rating books error: {}".format(e))
+
+    data = {"user_name": userid}
+    print(userid)
+    response = requests.post(backSite + "/book/book/list-history-rating-book", data=data).json()
+    logger.info(response)
+    if response['code'] == 0:
+        historicals = response['data']['info']
+        return render_template("Historicalscore.html", books=historicals, login=login, useid=userid)
 
 
 @app.route("/order", methods=['POST', 'GET'])
@@ -452,22 +463,28 @@ def order():
         return redirect(url_for('loginForm'))
     else:
         login, userid = True, session['userid']
-    cats = []
-    try:
-        sql = '''SELECT b.BookID,
-                        b.BookTitle,
-                        b.BookAuthor,
-                        floor((b.PubilcationYear-1000)/10) FROM (SELECT * from Cart ) a  
-                        LEFT  JOIN  Books as b on a.BookID = b.BookID where a.UserID = "{}"
-                        '''.format(userid)
-        cats = mysql.fetchall_db(sql)
-        cats = [[v for k, v in row.items()] for row in cats]
-    except Exception as e:
-        logger.exception("historical rating books error: {}".format(e))
-    return render_template("Order.html",
-                           books=cats,
-                           login=login,
-                           useid=userid)
+    carts = []
+    # try:
+    #     sql = '''SELECT b.BookID,
+    #                     b.BookTitle,
+    #                     b.BookAuthor,
+    #                     floor((b.PubilcationYear-1000)/10) FROM (SELECT * from Cart ) a
+    #                     LEFT  JOIN  Books as b on a.BookID = b.BookID where a.UserID = "{}"
+    #                     '''.format(userid)
+    #     cats = mysql.fetchall_db(sql)
+    #     cats = [[v for k, v in row.items()] for row in cats]
+    # except Exception as e:
+    #     logger.exception("historical rating books error: {}".format(e))
+
+    data = {"user_name": userid}
+    response = requests.post(backSite + "/order/order/get-shop-cart-info", data=data).json()
+    logger.info(response)
+    if response['code'] == 0:
+        carts = response['data']['info']
+        return render_template("Order.html",
+                               books=carts,
+                               login=login,
+                               useid=userid)
 
 
 # Shopping Cart
@@ -481,19 +498,25 @@ def add():
         return redirect(url_for('loginForm'))
     else:
         login, userid = True, session['userid']
+    # bookid = request.values.get('bookid')
     try:
         if request.method == 'GET':
             bookid = request.values.get('bookid')
-
-            sql = '''SELECT COUNT(1) as count FROM Cart WHERE UserID="{0}" and BookID="{1}" '''.format(userid,
-                                                                                                       bookid)
-            count = mysql.fetchone_db(sql)
-            if not count['count']:
-                sql = '''INSERT INTO Cart (UserID,BookID ) values ('{0}','{1}') '''.format(userid, bookid)
-                mysql.exe(sql)
-                logger.info("update Cart  success,sql:{}".format(sql))
+            # print(request.values)
+            # print(bookid)
+            # sql = '''SELECT COUNT(1) as count FROM Cart WHERE UserID="{0}" and BookID="{1}" '''.format(userid,
+            #                                                                                            bookid)
+            # count = mysql.fetchone_db(sql)
+            # if not count['count']:
+            #     sql = '''INSERT INTO Cart (UserID,BookID ) values ('{0}','{1}') '''.format(userid, bookid)
+            #     mysql.exe(sql)
+            #     logger.info("update Cart  success,sql:{}".format(sql))
+            data = {"user_name": userid, "book_id": bookid}
+            response = requests.post(backSite + "/order/order/add-shop-cart-goods", data=data).json()
+            logger.info(response)
     except Exception as e:
         logger.exception("update Cart  books error: {}".format(e))
+
     return redirect(url_for('order'))
 
 
@@ -503,14 +526,19 @@ def delete():
     删除购物车
     '''
     userid = session['userid']
-    try:
-        if request.method == 'GET':
-            bookid = request.values.get('bookid')
-            sql = '''DELETE  FROM Cart WHERE UserID="{0}" and BookID="{1}" '''.format(userid, bookid)
-            mysql.exe(sql)
-            logger.info("delete Cart  success,sql:{}".format(sql))
-    except Exception as e:
-        logger.exception("delete Cart  books error: {}".format(e))
+    bookid = request.values.get('bookid')
+    # try:
+    #     if request.method == 'GET':
+    #         bookid = request.values.get('bookid')
+    #         sql = '''DELETE  FROM Cart WHERE UserID="{0}" and BookID="{1}" '''.format(userid, bookid)
+    #         mysql.exe(sql)
+    #         logger.info("delete Cart  success,sql:{}".format(sql))
+    # except Exception as e:
+    #     logger.exception("delete Cart  books error: {}".format(e))
+
+    data = {"user_name": userid, "book_id": bookid}
+    response = requests.post(backSite + "/order/order/reduce-shop-cart-goods", data=data).json()
+    logger.info(response)
     return redirect(url_for('order'))
 
 
