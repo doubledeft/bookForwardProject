@@ -217,26 +217,35 @@ def update_recommend_book(UserID, BookID):
     更新推荐数据
     """
 
-    sql = '''SELECT score FROM Booktuijian WHERE UserID="{0}" and BookID="{1}"'''.format(UserID, BookID)
-    score = mysql.fetchone_db(sql)
-    if score:
-        score = int(score['score'])
+    # sql = '''SELECT score FROM Booktuijian WHERE UserID="{0}" and BookID="{1}"'''.format(UserID, BookID)
+    # score = mysql.fetchone_db(sql)
+    # if score:
+    #     score = int(score['score'])
+    #
+    #     if score + 0.5 > 10:
+    #         score = 10
+    #     else:
+    #         score += 0.5
+    #     sql = '''UPDATE Booktuijian SET score='{2}' WHERE UserID="{0}" and BookID="{1}" '''.format(UserID, BookID,
+    #                                                                                                int(score))
+    #     logger.info("update_recommend_book, sql:{}".format(sql))
+    #     mysql.exe(sql)
+    # else:
+    #     score = 0.5
+    #     sql = ''' insert into Booktuijian (UserID,BookID,score) values ('{0}','{1}','{2}') '''.format(UserID, BookID,
+    #                                                                                                   int(score))
+    #     logger.info("update_recommend_book, sql:{}".format(sql))
+    #     mysql.exe(sql)
 
-        if score + 0.5 > 10:
-            score = 10
-        else:
-            score += 0.5
-        sql = '''UPDATE Booktuijian SET score='{2}' WHERE UserID="{0}" and BookID="{1}" '''.format(UserID, BookID,
-                                                                                                   int(score))
-        logger.info("update_recommend_book, sql:{}".format(sql))
-        mysql.exe(sql)
+    data = {"user_id":UserID,"book_id":BookID}
+    response = requests.post(backSite+"/book/book/update-recommend-book", data=data).json()
+    logger.info(response)
+    if response['code'] ==0:
+        logger.info("成功")
+        return True
     else:
-        score = 0.5
-        sql = ''' insert into Booktuijian (UserID,BookID,score) values ('{0}','{1}','{2}') '''.format(UserID, BookID,
-                                                                                                      int(score))
-        logger.info("update_recommend_book, sql:{}".format(sql))
-        mysql.exe(sql)
-
+        logger.exception("推荐出现错误")
+        return False
 
 @app.route("/bookinfo", methods=['POST', 'GET'])
 def bookinfo():
@@ -255,22 +264,40 @@ def bookinfo():
     try:
         if request.method == 'GET':
             bookid = request.args.get('bookid')
-            sql = """SELECT BookTitle,
-                            BookID,
-                            PubilcationYear,
-                            BookAuthor,
-                            ImageM from Books where BookID="{}" """.format(bookid)
-            book_info = mysql.fetchall_db(sql)
-            book_info = [v for k, v in book_info[0].items()]
+            # sql = """SELECT BookTitle,
+            #                 BookID,
+            #                 PubilcationYear,
+            #                 BookAuthor,
+            #                 ImageM from Books where BookID="{}" """.format(bookid)
+            # book_info = mysql.fetchall_db(sql)
+            # book_info = [v for k, v in book_info[0].items()]
+
+            data = {"book_id":bookid}
+            response = requests.post(backSite+"/book/book/get-book-info", data=data).json()
+            logger.info(response)
+            if response['code'] ==0:
+                book_info=response['data']['info']
+            else:
+                logger.exception("推荐出现错误")
+
             update_recommend_book(userid, bookid)
         if userid:
-            sql = '''SELECT Rating FROM Bookrating 
-                            where UserID="{}" and BookID="{}"'''.format(userid, bookid)
-            score = mysql.fetchone_db(sql)
-            if score:
-                score = int(score['Rating'])
+            # sql = '''SELECT Rating FROM Bookrating
+            #                 where UserID="{}" and BookID="{}"'''.format(userid, bookid)
+            # score = mysql.fetchone_db(sql)
+            # if score:
+            #     score = int(score['Rating'])
+            #     score = math.ceil(score / 2)
+            #     if score > 10: score = 10
+            data = {"user_id":userid,"book_id":bookid}
+            response = requests.post(backSite+"/book/book/get-user-book-rating", data=data).json()
+            logger.info(response)
+            if response['code'] ==0:
+                score=response['data']['score']
                 score = math.ceil(score / 2)
                 if score > 10: score = 10
+            else:
+                logger.exception("没有此用户对这本书的评分")
 
     except Exception as e:
         logger.exception("select book info error: {}".format(e))
@@ -293,16 +320,26 @@ def user():
     else:
         login, userid = True, session['userid']
     userinfo = []
-    try:
-        sql = "select UserID,Location,Age from User where UserID='{}'".format(userid)
-        userinfo = mysql.fetchone_db(sql)
-        userinfo = [v for k, v in userinfo.items()]
-    except Exception as e:
-        logger.exception("select UserInfo error: {}".format(e))
-    return render_template("UserInfo.html",
-                           login=login,
-                           useid=userid,
-                           userinfo=userinfo)
+    # try:
+    #     sql = "select UserID,Location,Age from User where UserID='{}'".format(userid)
+    #     userinfo = mysql.fetchone_db(sql)
+    #     userinfo = [v for k, v in userinfo.items()]
+    # except Exception as e:
+    #     logger.exception("select UserInfo error: {}".format(e))
+    data = {"user_id":userid}
+    response = requests.post(backSite+"/user/user/get-user-info", data=data).json()
+    logger.info(response)
+    userinfo=response['data']
+    if response['code'] ==0:
+        return render_template("UserInfo.html",
+                               login=login,
+                               useid=userid,
+                               userinfo=userinfo)
+    else:
+        logger.exception("获取用户信息失败")
+        return False
+
+
 
 
 @app.route("/search", methods=['POST', 'GET'])
