@@ -150,24 +150,6 @@ def register():
     注册
     :return: Register.html
     """
-    # try:
-    #     if request.method == 'POST':
-    #         username = request.form['username']
-    #         password = request.form['password']
-    #         age = request.form['age']
-    #
-    #         try:
-    #             sql = "insert into User (UserID,Location,Age) values ('{}','{}','{}')".format(username, password, age)
-    #             mysql.exe(sql)
-    #             logger.info("username:{},password:{},age:{} register success".format(username, password, age))
-    #         except Exception as e:
-    #             mysql.rollback()
-    #             logger.exception("username:{},password:{},age:{} register filed".format(username, password, age))
-    #
-    #         return render_template('Login.html')
-    # except Exception as e:
-    #     logger.exception("register function error: {}".format(e))
-    #     return render_template('Register.html', error='注册出错')
     username = request.form['username']
     password = request.form['password']
     age=request.form['age']
