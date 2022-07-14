@@ -1,7 +1,10 @@
+import json
+
 from utils import load_config
 from logger import setup_log
 from flask import Flask, request, render_template, session, redirect, url_for
 from utils import mysql
+import numpy as np
 import math
 from dataclasses import dataclass
 from urllib import response
@@ -26,17 +29,22 @@ def root():
         login, userid = True, session['userid']
     # 热门书籍
     hot_books = []
-    # sql: SELECT BookID,sum(Rating) as score FROM Book.Bookrating group by BookID order by score desc limit 10;
-    sql = "SELECT BookTitle, BookAuthor ,BookID, ImageM FROM Books where BookID = '" + \
-          "' or BookID = '".join(config['bookid']) + "'"
+    # # sql: SELECT BookID,sum(Rating) as score FROM Book.Bookrating group by BookID order by score desc limit 10;
+    # sql = "SELECT BookTitle, BookAuthor ,BookID, ImageM FROM Books where BookID = '" + \
+    #       "' or BookID = '".join(config['bookid']) + "'"
+    #
+    # try:
+    #     hot_books = mysql.fetchall_db(sql)
+    #     hot_books = [[v for k, v in row.items()] for row in hot_books]
+    # except Exception as e:
+    #     logger.exception("select hot books error: {}".format(e))
 
-    try:
-        hot_books = mysql.fetchall_db(sql)
-        hot_books = [[v for k, v in row.items()] for row in hot_books]
-
-    except Exception as e:
-        logger.exception("select hot books error: {}".format(e))
-
+    bookids=json.dumps(config['bookid'])
+    # print(bookids)
+    response = requests.post(backSite + "/book/book/list-hot-book").json();
+    logger.info(response)
+    if response['code']==0:
+        hot_books=response['data']['info']
     return render_template('Index.html',
                            login=login,
                            books=hot_books,
@@ -56,31 +64,36 @@ def guess():
     # 推荐书籍
     guess_books = []
     if login:
-        sql = """select e.BookTitle,
-                       e.BookAuthor,
-                       e.BookID,
-                       e.ImageM
-                       from Books e
-                inner join (select  c.BookID,
-                                    sum(c.Rating) as score  
-                            from (select UserID,BookID,Rating from Bookrating where Rating != 0
-                                limit {0}) c 
-                            inner join (select UserID 
-                                        from (select UserID,BookID from Bookrating where Rating != 0
-                                        limit {0}) a 
-                                        inner join (select BookID from Booktuijian where UserID='{1}') b
-                                        on a.BookID=b.BookID ) d
-                            on c.UserID=d.UserID
-                            group by c.BookID 
-                            order by score desc 
-                            limit 10) f
-                on e.BookID = f.BookID""".format(config['limit'], session['userid'])
-        try:
-            guess_books = mysql.fetchall_db(sql)
-            guess_books = [[v for k, v in row.items()] for row in guess_books]
-
-        except Exception as e:
-            logger.exception("select guess books error: {}".format(e))
+        # sql = """select e.BookTitle,
+        #                e.BookAuthor,
+        #                e.BookID,
+        #                e.ImageM
+        #                from Books e
+        #         inner join (select  c.BookID,
+        #                             sum(c.Rating) as score
+        #                     from (select UserID,BookID,Rating from Bookrating where Rating != 0
+        #                         limit {0}) c
+        #                     inner join (select UserID
+        #                                 from (select UserID,BookID from Bookrating where Rating != 0
+        #                                 limit {0}) a a
+        #                                 inner join (select BookID from Booktuijian where UserID='{1}') b
+        #                                 on a.BookID=b.BookID ) d
+        #                     on c.UserID=d.UserID
+        #                     group by c.BookID
+        #                     order by score desc
+        #                     limit 10) f
+        #         on e.BookID = f.BookID""".format(config['limit'], session['userid'])
+        # try:
+        #     guess_books = mysql.fetchall_db(sql)
+        #     guess_books = [[v for k, v in row.items()] for row in guess_books]
+        #
+        # except Exception as e:
+        #     logger.exception("select guess books error: {}".format(e))
+        data = {"user_name": userid}
+        response = requests.post(backSite + "/book/book/recommend-by-user", data=data).json();
+        logger.info(response)
+        if response['code']==0:
+            guess_books=response['data']['info']
     return render_template('Index.html',
                            login=login,
                            books=guess_books,
