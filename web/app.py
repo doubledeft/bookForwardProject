@@ -549,21 +549,26 @@ def editinfo():
     :return: Userinfo.html
     """
     userid = session['userid']
-    try:
-        if request.method == 'POST':
-            password = request.form['password']
-            age = request.form['age']
-            try:
-                sql = "UPDATE User SET Location='{}',Age= '{}' WHERE UserID='{}'".format(password, age, userid)
-                mysql.exe(sql)
-                logger.info("UPDATE userinfo --> username:{},password:{},age:{} ".format(userid, password, age))
-            except Exception as e:
-                mysql.rollback()
-                logger.exception("username:{},password:{},age:{} UPDATE filed".format(username, password, age))
-            return redirect(url_for('user'))
-    except Exception as e:
-        logger.exception("add user info  error: {}".format(e))
-        return redirect(url_for('user'))
+    password = request.form['password']
+    age = request.form['age']
+    # try:
+    #     if request.method == 'POST':
+    #         password = request.form['password']
+    #         age = request.form['age']
+    #         try:
+    #             sql = "UPDATE User SET Location='{}',Age= '{}' WHERE UserID='{}'".format(password, age, userid)
+    #             mysql.exe(sql)
+    #             logger.info("UPDATE userinfo --> username:{},password:{},age:{} ".format(userid, password, age))
+    #         except Exception as e:
+    #             mysql.rollback()
+    #             logger.exception("username:{},password:{},age:{} UPDATE filed".format(username, password, age))
+    #         return redirect(url_for('user'))
+    # except Exception as e:
+    #     logger.exception("add user info  error: {}".format(e))
+    #     return redirect(url_for('user'))
+    data = {"user_name": userid, "location": password, "age": age}
+    response = requests.post(backSite + "/user/user/update-user-info", data=data).json()
+    logger.info(response)
 
 
 @app.route("/editpassword", methods=["GET", "POST"])
@@ -578,14 +583,17 @@ def editpassword():
             password1 = request.form['password1']
             password2 = request.form['password2']
             if password1 == password2:
-                try:
-                    sql = "UPDATE User SET Location='{}' WHERE UserID='{}'".format(password1, userid)
-                    mysql.exe(sql)
-                    logger.info("UPDATE password --> username:{},password:{} ".format(userid, password1))
-                except Exception as e:
-                    mysql.rollback()
-                    logger.exception("username:{},password:{} UPDATE password filed".format(username, password1))
-                return redirect(url_for('user'))
+                # try:
+                #     sql = "UPDATE User SET Location='{}' WHERE UserID='{}'".format(password1, userid)
+                #     mysql.exe(sql)
+                #     logger.info("UPDATE password --> username:{},password:{} ".format(userid, password1))
+                # except Exception as e:
+                #     mysql.rollback()
+                #     logger.exception("username:{},password:{} UPDATE password filed".format(username, password1))
+                # return redirect(url_for('user'))
+                data = {"user_name": userid, "password": password1}
+                response = requests.post(backSite + "/user/user/update-password", data=data).json()
+                logger.info(response)
     except Exception as e:
         logger.exception("add user info  error: {}".format(e))
         return redirect(url_for('user'))
@@ -607,9 +615,14 @@ def adminuser():
     users = []
     try:
         userid = session['userid']
-        sql = "select * from User where Age != 'nan' limit 20 "
-        users = mysql.fetchall_db(sql)
-        users = [[v for k, v in row.items()] for row in users]
+        # sql = "select * from User where Age != 'nan' limit 20 "
+        # users = mysql.fetchall_db(sql)
+        # users = [[v for k, v in row.items()] for row in users]
+        # return render_template('AdminUser.html', users=users, error=False, userid=userid)
+
+        response = requests.post(backSite + "/user/user/query-all").json()
+        users = response['data']['info']
+        logger.info(response)
         return render_template('AdminUser.html', users=users, error=False, userid=userid)
     except Exception as e:
         logger.exception("Admin User info error: {}".format(e))
@@ -626,10 +639,15 @@ def keyword():
         userid = session['userid']
         if request.method == 'POST':
             keyword = request.form['keyword']
-            if keyword:
-                sql = "select UserID,Location,Age from User where Location like '%{}%' limit 20 ".format(keyword)
-                users = mysql.fetchall_db(sql)
-                users = [[v for k, v in row.items()] for row in users]
+            # if keyword:
+            #     sql = "select UserID,Location,Age from User where Location like '%{}%' limit 20 ".format(keyword)
+            #     users = mysql.fetchall_db(sql)
+            #     users = [[v for k, v in row.items()] for row in users]
+
+            data = {"keyword": keyword}
+            response = requests.post(backSite + "/user/user/search-users", data).json()
+            users = response['data']['info']
+            logger.info(response)
             return render_template('AdminUser.html', users=users, userid=userid)
     except Exception as e:
         logger.exception("keyword info  error: {}".format(e))
@@ -643,11 +661,15 @@ def delete_user():
     '''
     userid = session['userid']
     try:
-        if request.method == 'GET':
-            userid = request.values.get('userid')
-            sql = '''DELETE  FROM User WHERE UserID="{0}" '''.format(userid)
-            mysql.exe(sql)
-            logger.info("delete User  success,sql:{}".format(sql))
+        # if request.method == 'GET':
+        #     userid = request.values.get('userid')
+        #     sql = '''DELETE  FROM User WHERE UserID="{0}" '''.format(userid)
+        #     mysql.exe(sql)
+        #     logger.info("delete User  success,sql:{}".format(sql))
+        userid = request.values.get('userid')
+        data = {"user_name": userid}
+        response = requests.post(backSite + "/user/user/delete", data).json()
+        logger.info(response)
     except Exception as e:
         logger.exception("delete User books error: {}".format(e))
     return redirect(url_for('adminuser'))
@@ -660,13 +682,14 @@ def adminbook():
     '''
     userid = session['userid']
     books = []
-    try:
-        sql = "select * from Books limit 20 "
-        books = mysql.fetchall_db(sql)
-        books = [[v for k, v in row.items()] for row in books]
-
-    except Exception as e:
-        logger.exception("Admin Book info error: {}".format(e))
+    # try:
+    #     sql = "select * from Books limit 20 "
+    #     books = mysql.fetchall_db(sql)
+    #     books = [[v for k, v in row.items()] for row in books]
+    # except Exception as e:
+    #     logger.exception("Admin Book info error: {}".format(e))
+    response = requests.post(backSite + "/user/user/list-book-info").json()
+    logger.info(response)
     return render_template('AdminBook.html', books=books, userid=userid)
 
 
@@ -680,10 +703,15 @@ def keyword_book():
     try:
         if request.method == 'POST':
             keyword = request.form['keyword']
-            if keyword:
-                sql = "select * from Books where BookTitle like '%{}%' limit 20 ".format(keyword)
-                books = mysql.fetchall_db(sql)
-                books = [[v for k, v in row.items()] for row in books]
+            # if keyword:
+            #     sql = "select * from Books where BookTitle like '%{}%' limit 20 ".format(keyword)
+            #     books = mysql.fetchall_db(sql)
+            #     books = [[v for k, v in row.items()] for row in books]
+            data = {"keyword": keyword}
+            response = requests.post(backSite + "/book/book/search-books", data).json()
+            logger.info(response)
+            if response['code'] == 0:
+                books = response['data']['info']
     except Exception as e:
         logger.exception("keyword info  error: {}".format(e))
     return render_template('AdminBook.html', books=books, userid=userid)
@@ -698,9 +726,12 @@ def delete_book():
     try:
         if request.method == 'GET':
             bookid = request.values.get('bookid')
-            sql = '''DELETE  FROM Books WHERE BookID="{0}" '''.format(bookid)
-            mysql.exe(sql)
-            logger.info("delete Books  success,sql:{}".format(sql))
+            # sql = '''DELETE  FROM Books WHERE BookID="{0}" '''.format(bookid)
+            # mysql.exe(sql)
+            # logger.info("delete Books  success,sql:{}".format(sql))
+            data = {"book_id": bookid}
+            response = requests.post(backSite + "/book/book/delete_book", data).json()
+            logger.info(response)
     except Exception as e:
         logger.exception("delete books error: {}".format(e))
     return redirect(url_for('adminbook'))
@@ -719,11 +750,15 @@ def addbook():
             author = request.form['author']
             public = request.form['public']
             Image = "http://photocdn.sohu.com/20140424/Img398717878.jpg"
-            sql = '''INSERT INTO Books (BookID,BookTitle,BookAuthor,PubilcationYear,Publisher,ImageS,ImageM,ImageL) 
-                     values  ('{0}','{1}','{2}','{3}','{4}','{5}','{6}','{7}')'''.format(bookid, title, author, "2018",
-                                                                                         public, Image, Image, Image)
-            mysql.exe(sql)
-            logger.info("add Books  success,sql:{}".format(sql))
+            # sql = '''INSERT INTO Books (BookID,BookTitle,BookAuthor,PubilcationYear,Publisher,ImageS,ImageM,ImageL)
+            #          values  ('{0}','{1}','{2}','{3}','{4}','{5}','{6}','{7}')'''.format(bookid, title, author, "2018",
+            #                                                                              public, Image, Image, Image)
+            # mysql.exe(sql)
+            # logger.info("add Books  success,sql:{}".format(sql))
+
+            data = {"name":title,"author":author,"publish_date":2018,"press":public,"image_url":Image}
+            response = requests.post(backSite + "/book/book/add_book", data).json()
+            logger.info(response)
             return redirect(url_for('adminbook'))
     except Exception as e:
         logger.exception("delete books error: {}".format(e))

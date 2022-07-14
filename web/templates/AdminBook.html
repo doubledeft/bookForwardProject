@@ -86,12 +86,12 @@
         <div class="list-group">
             {% for book in books %}
             <div class="col-sm-12  list-group-item" >
-                <div class="col-sm-3 line-center" >{{book[0]}}</div>
-                <div class="col-sm-2 line-center"><p>{{book[1]}}</p></div>
-                <div class="col-sm-2 line-center"><p>{{book[2]}}</p></div>
-                <div class="col-sm-2 line-center"><p>{{book[4]}}</p></div>
+                <div class="col-sm-3 line-center" >{{book["id"]}}</div>
+                <div class="col-sm-2 line-center"><p>{{book["name"]}}</p></div>
+                <div class="col-sm-2 line-center"><p>{{book["author"]}}</p></div>
+                <div class="col-sm-2 line-center"><p>{{book["press"]}}</p></div>
                 <div class="col-sm-3 line-center">
-                <a href="/delete_book?bookid={{book[0]}}" bookid="{{ book[0] }}"><button class="btn btn-danger">删除书籍</button></a>
+                <a href="/delete_book?bookid={{book["id"]}}" bookid="{{ book["id"] }}"><button class="btn btn-danger">删除书籍</button></a>
                 </div>
             </div>
             {% endfor %}

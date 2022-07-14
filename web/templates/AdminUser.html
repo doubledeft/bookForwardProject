@@ -83,11 +83,11 @@
         <div class="list-group">
             {% for user in users %}
             <div class="col-sm-12  list-group-item" >
-                <div class="col-sm-3 line-center" >{{user[0]}}</div>
-                <div class="col-sm-2 line-center"><p>{{user[1]}}</p></div>
-                <div class="col-sm-2 line-center"><p>{{user[2]}}</p></div>
+                <div class="col-sm-3 line-center" >{{user["id"]}}</div>
+                <div class="col-sm-2 line-center"><p>{{user["country"]}}</p></div>
+                <div class="col-sm-2 line-center"><p>{{user["age"]}}</p></div>
                 <div class="col-sm-3 line-center">
-                <a href="/delete_user?userid={{user[0]}}" userid="{{ user[0] }}"><button class="btn btn-danger">删除用户</button></a>
+                <a href="/delete_user?userid={{user["id"]}}" userid="{{ user["id"] }}"><button class="btn btn-danger">删除用户</button></a>
                 </div>
             </div>
             {% endfor %}

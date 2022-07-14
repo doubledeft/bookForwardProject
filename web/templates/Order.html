@@ -130,7 +130,7 @@
 
     <div class="list-group">
             {% for book in books %}
-            <div class="col-sm-12  list-group-item" onclick="myClick('{{book["id"]}}')">
+            <div class="col-sm-12  list-group-item" onclick="myClick('{{book["bookInfo"]["id"]}}')">
                 <div class="col-sm-3 line-center" >{{book["id"]}}</div>
                 <div class="col-sm-2 line-center"><p>{{book["bookInfo"]["name"]}}</p></div>
                 <div class="col-sm-2 line-center"><p>{{book["bookInfo"]["author"]}}</p></div>
